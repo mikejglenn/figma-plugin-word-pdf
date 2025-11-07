@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1a1a1a;
+    }
+    
+    p {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    
+    .upload-area {
+      border-radius: 8px;
+      padding: 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 16px;
+    }
+       
+    .upload-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+    
+    .upload-subtext {
+      font-size: 11px;
+      color: #999;
+    }
+    
+    input[type="file"] {
+      display: none;
+    }
+    
+    .status {
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+    }
+    
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+    
+    .status.show {
+      display: block;
+    }
+    
+    .file-info {
+      background: #f3f4f6;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    
+    .file-info.show {
+      display: block;
+    }
+    
+    .file-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+    
+    .file-size {
+      font-size: 11px;
+      color: #666;
+    }
+    
+    .preview {
+      margin-bottom: 16px;
+      display: none;
+    }
+    
+    .preview.show {
+      display: block;
+    }
+    
+    .preview-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1a1a1a;
+    }
+    
+    .preview-content {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 12px;
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #374151;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    
+    .buttons {
+      display: flex;
+      gap: 8px;
+    }
+    
+    button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      background: #5568d3;
+    }
+    
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+    
+    .btn-success:hover:not(:disabled) {
+      background: #059669;
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+      margin-right: 6px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Word to Figma PDF</h1>
+    <p>Upload a Word document to extract and add to Figma</p>
+    
+    <label for="fileInput" class="upload-area" id="uploadArea">
+      <div class="upload-text">Click to upload Word document</div>
+      <div class="upload-subtext">.docx files only</div>
+    </label>
+    <input type="file" id="fileInput" accept=".docx">
+    
+    <div class="status" id="status"></div>
+    
+    <div class="file-info" id="fileInfo">
+      <div class="file-name" id="fileName"></div>
+      <div class="file-size" id="fileSize"></div>
+    </div>
+    
+    <div class="preview" id="preview">
+      <div class="preview-title">Content Preview</div>
+      <div class="preview-content" id="previewContent"></div>
+    </div>
+    
+    <div class="buttons">
+      <button class="btn-primary" id="addToFigma" disabled>
+        Add to Figma
+      </button>
+      <button class="btn-success" id="exportPDF" disabled>
+        Export PDF
+      </button>
+    </div>
+  </div>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
+  <script>
+    let docContent = '';
+    let currentFileName = '';
+    
+    const fileInput = document.getElementById('fileInput');
+    const status = document.getElementById('status');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const preview = document.getElementById('preview');
+    const previewContent = document.getElementById('previewContent');
+    const addToFigmaBtn = document.getElementById('addToFigma');
+    const exportPDFBtn = document.getElementById('exportPDF');
+    
+    function showStatus(message, type) {
+      status.textContent = message;
+      status.className = `status ${type} show`;
+    }
+    
+    function hideStatus() {
+      status.className = 'status';
+    }
+    
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (!file.name.endsWith('.docx')) {
+        showStatus('Please upload a .docx file', 'error');
+        return;
+      }
+      
+      currentFileName = file.name;
+      showStatus('Processing Word document...', 'success');
+      
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        
+        docContent = result.value;
+        
+        fileName.textContent = file.name;
+        fileSize.textContent = `${docContent.length} characters`;
+        fileInfo.classList.add('show');
+        
+        previewContent.textContent = docContent.substring(0, 500) + (docContent.length > 500 ? '...' : '');
+        preview.classList.add('show');
+        
+        addToFigmaBtn.disabled = false;
+        exportPDFBtn.disabled = false;
+        
+        showStatus('Document loaded successfully!', 'success');
+        
+      } catch (error) {
+        showStatus(`Error: ${error.message}`, 'error');
+        console.error(error);
+      }
+    });
+    
+    addToFigmaBtn.addEventListener('click', () => {
+      if (!docContent) return;
+      
+      addToFigmaBtn.innerHTML = '<span class="spinner"></span>Adding...';
+      addToFigmaBtn.disabled = true;
+      
+      parent.postMessage({
+        pluginMessage: {
+          type: 'create-text',
+          content: docContent
+        }
+      }, '*');
+    });
+    
+    exportPDFBtn.addEventListener('click', async () => {
+      exportPDFBtn.innerHTML = '<span class="spinner"></span>Exporting...';
+      exportPDFBtn.disabled = true;
+      
+      parent.postMessage({
+        pluginMessage: {
+          type: 'export-pdf'
+        }
+      }, '*');
+    });
+    
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (!msg) return;
+      
+      if (msg.type === 'text-created') {
+        if (msg.success) {
+          showStatus(msg.message, 'success');
+          addToFigmaBtn.innerHTML = 'Add to Figma';
+          addToFigmaBtn.disabled = false;
+        }
+      } else if (msg.type === 'export-pdf-data') {
+        generatePDFFromFigma(msg.content);
+      } else if (msg.type === 'export-pdf-error') {
+        showStatus(msg.message, 'error');
+        exportPDFBtn.innerHTML = 'Export PDF';
+        exportPDFBtn.disabled = false;
+      } else if (msg.type === 'error') {
+        showStatus(`Error: ${msg.message}`, 'error');
+        addToFigmaBtn.innerHTML = 'Add to Figma';
+        addToFigmaBtn.disabled = false;
+      }
+    };
+    
+    async function generatePDFFromFigma(figmaContent) {
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.setFontSize(16);
+        doc.text('Figma Export', 20, 20);
+        
+        let yPosition = 40;
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margins = 20;
+        const maxLineWidth = pageWidth - (margins * 2);
+        
+        figmaContent.forEach((item, index) => {
+          const pdfFontSize = Math.min(item.fontSize / 2, 16);
+          doc.setFontSize(pdfFontSize);
+          
+          const lines = doc.splitTextToSize(item.text, maxLineWidth);
+          
+          const textHeight = lines.length * (pdfFontSize * 0.35);
+          if (yPosition + textHeight > pageHeight - margins) {
+            doc.addPage();
+            yPosition = margins;
+          }
+          
+          doc.text(lines, margins, yPosition);
+          yPosition += textHeight + 10;
+        });
+        
+        const pdfFileName = currentFileName.replace('.docx', '_figma.pdf') || 'figma_export.pdf';
+        doc.save(pdfFileName);
+        
+        showStatus(`PDF exported as ${pdfFileName}`, 'success');
+        
+      } catch (error) {
+        showStatus(`Error exporting PDF: ${error.message}`, 'error');
+        console.error(error);
+      } finally {
+        exportPDFBtn.innerHTML = 'Export PDF';
+        exportPDFBtn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
